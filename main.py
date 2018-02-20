@@ -3,13 +3,10 @@
 import os
 import json
 
-from pprint import pprint
-
 from optparse import OptionParser
 
 from keras import models
 from keras import layers
-from keras import optimizers
 
 import numpy as np
 
@@ -19,7 +16,7 @@ import numpy as np
 # 2 - discard from hand
 # 3 - discard after meld
 # 4 - used in open set
-states_num = 5
+states_num = 1
 tiles_num = 136
 
 train_input_raw = []
@@ -82,31 +79,31 @@ def main():
     parse_logs(test_logs_path, test_input_raw, test_output_raw)
 
     print("Train data size = %d, test data size = %d"
-        % (len(train_input_raw), len(test_input_raw)))
+          % (len(train_input_raw), len(test_input_raw)))
 
     if (len(train_input_raw) != len(train_output_raw)) \
-            or (len(test_input_raw) != len(test_output_raw)) \
-            or (len(train_input_raw) != len(test_input_raw)):
+            or (len(test_input_raw) != len(test_output_raw)):
         print("Bad json file")
         return 1
 
-    samples = len(train_input_raw)
+    train_samples = len(train_input_raw)
+    test_samples = len(test_input_raw)
 
     train_input = np.asarray(train_input_raw).astype('float32')
     train_output = np.asarray(train_output_raw).astype('float32')
     test_input = np.asarray(test_input_raw).astype('float32')
     test_output = np.asarray(test_output_raw).astype('float32')
 
-    train_input = train_input.reshape((samples, tiles_num * states_num))
-    test_input = test_input.reshape((samples, tiles_num * states_num))
+    train_input = train_input.reshape((train_samples, tiles_num * states_num))
+    test_input = test_input.reshape((test_samples, tiles_num * states_num))
 
     model = models.Sequential()
     model.add(layers.Dense(512, activation='relu', input_shape=(tiles_num * states_num,)))
     model.add(layers.Dense(tiles_num, activation='softmax'))
 
     model.compile(optimizer='rmsprop',
-        loss='binary_crossentropy',
-        metrics=['accuracy'])
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
 
     model.fit(train_input, train_output, epochs=20, batch_size=512)
 
